@@ -19,11 +19,14 @@ const Footer = () => {
                        Enjoy fast, reliable parcel delivery with real-time tracking and zero hassle. From personal packages to business shipments — we deliver on time, every time.
                     </p>
                     <div className="navbar-center hidden lg:flex">
+                         <div className="divider divider-neutral"></div>
                     <ul className="flex gap-4 px-1 mt-4">
                        {navItems}
                     </ul>
+                     <div className="divider"></div>
                 </div>
                 </aside>
+                
                 <nav>
                     <div className="">
                        <SocialIcons/>
