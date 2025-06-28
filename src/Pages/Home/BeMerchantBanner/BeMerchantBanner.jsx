@@ -4,7 +4,7 @@ import locationMerchant from '../../../assets/location-merchant.png'
 const BeMerchantBanner = () => {
     return (
         <div>
-            <div className="hero bg-[#03373d] rounded-4xl min-h-96 px-16 my-16">
+            <div className="bg-[url('assets/be-a-merchant-bg.png')] bg-no-repeat bg-[#03373d] rounded-4xl min-h-96 px-16 my-16 py-16">
                 <div className="hero-content flex-col lg:flex-row-reverse">
                     <img
                         src={locationMerchant}
