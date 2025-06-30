@@ -7,6 +7,7 @@ import AuthLayout from "../Layout/AuthLayout";
 import Login from "../Pages/Authentication/Login/login";
 import SignUp from "../Pages/Authentication/SignUp/SignUp";
 import Coverage from "../Pages/Coverage/Coverage";
+import SendParcel from "../Pages/SendParcel/SendParcel";
 
 export const router = createBrowserRouter([
   {
@@ -16,6 +17,10 @@ export const router = createBrowserRouter([
         {
             index: true,
             Component: Home
+        },
+        {
+          path: 'sendparcel',
+          Component: SendParcel
         },
         {
           path: 'coverage',
