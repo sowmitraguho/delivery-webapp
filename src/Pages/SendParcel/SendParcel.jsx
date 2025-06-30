@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -6,6 +6,48 @@ import Swal from 'sweetalert2';
 
 const SendParcel = () => {
     const { register, handleSubmit, watch, reset, formState: { errors } } = useForm();
+
+
+    //cost calculation
+  const calculateCostBreakdown = (data) => {
+  const isOutside = data.senderServiceCenter !== data.receiverServiceCenter;
+  const type = data.type;
+  const weight = parseFloat(data.weight) || 0;
+  let baseCost = 0;
+  let extraCharge = 0;
+  let total = 0;
+  let notes = [];
+
+  if (type === "document") {
+    baseCost = isOutside ? 80 : 60;
+    total = baseCost;
+    notes.push(`Base Charge for Document (${isOutside ? 'Outside' : 'Within'} City): Tk ${baseCost}`);
+  } else {
+    if (weight <= 3) {
+      baseCost = isOutside ? 150 : 110;
+      total = baseCost;
+      notes.push(`Base Charge for more than or equal 3Kg Non-Document Product (${isOutside ? 'Outside' : 'Within'} City): Tk ${baseCost}`);
+    } else {
+      baseCost = isOutside ? 150 : 110;
+      const additional = parseFloat(((weight - 3) * 40).toFixed(2));
+      extraCharge = isOutside ? additional + 40 : additional;
+      total = baseCost + extraCharge;
+      notes.push(`Base Charge for more than 3Kg Non-Document Product: Tk ${baseCost}`);
+      notes.push(`Extra Weight Charge: Tk ${additional}`);
+      if (isOutside) notes.push(`Outside City Extra: Tk 40`);
+    }
+  }
+
+  return { total, notes };
+};
+
+
+
+    const proceedToPayment = (parcelData) => {
+        console.log("Proceeding to payment with:", parcelData);
+        // You’ll plug in your payment system here
+    };
+
 
     const onSubmit = async (data) => {
         let cost = 50;
@@ -16,12 +58,22 @@ const SendParcel = () => {
             cost += 30;
         }
 
-        // toast.info(`Delivery Cost: $${cost.toFixed(2)}`, {
-        //     position: 'top-center',
-        //     autoClose: false,
-        //     closeOnClick: false,
-        //     draggable: false,
-        //     onClose: async () => {
+        //cost calculation
+        const {notes, total} = calculateCostBreakdown(data);
+        
+
+
+
+        // Swal.fire({
+        //     title: "Are you sure?",
+        //     text: `Delivery Cost: $${cost.toFixed(2)}`,
+        //     icon: "warning",
+        //     showCancelButton: true,
+        //     confirmButtonColor: "#3085d6",
+        //     cancelButtonColor: "#d33",
+        //     confirmButtonText: "Confirm!"
+        // }).then((result) => {
+        //     if (result.isConfirmed) {
         //         const parcel = {
         //             ...data,
         //             cost,
@@ -39,26 +91,37 @@ const SendParcel = () => {
         //         //     body: JSON.stringify(parcel)
         //         // });
 
-        //         toast.success('Parcel successfully submitted!');
-        //         reset();
-        //     },
-        //     toastId: 'cost-toast',
-        //     render: ({ closeToast }) => (
-        //         <div className="text-center">
-        //             <p className="mb-2">Delivery Cost: ${cost.toFixed(2)}</p>
-        //             <button className="btn btn-sm bg-[#caeb66] text-[#03373d] dark:bg-[#4b6e0f] dark:text-white" onClick={closeToast}>Confirm</button>
-        //         </div>
-        //     )
+        //         Swal.fire({
+        //             title: "Order Confirmed!",
+        //             text: 'Parcel successfully submitted!',
+        //             icon: "success"
+        //         });
+        //         // reset();
+        //     }
         // });
 
         Swal.fire({
-            title: "Are you sure?",
-            text: `Delivery Cost: $${cost.toFixed(2)}`,
-            icon: "warning",
+            title: "Payment Breakdown & Confirmation",
+            html: `
+       <div class="text-left leading-relaxed">
+        <p><strong>Parcel Type:</strong> ${data.type}</p>
+        <p><strong>Weight:</strong> ${data.weight || 'N/A'} kg</p>
+        <hr class="my-2"/>
+        ${notes.map(n => `<p>✅ ${n}</p>`).join('')}
+        <hr class="my-2"/>
+        <p class="text-lg font-bold">Total Cost: Tk ${total}</p>
+      </div>
+    `,
+            icon: "info",
             showCancelButton: true,
-            confirmButtonColor: "#3085d6",
-            cancelButtonColor: "#d33",
-            confirmButtonText: "Confirm!"
+            confirmButtonColor: "#caeb66", // match light mode
+            cancelButtonColor: "#03373d", // match dark mode
+            confirmButtonText: `<span class="flex items-center gap-2"><FaMoneyBillWave /> Proceed to Pay</span>`,
+            cancelButtonText: `<span class="flex items-center gap-2"><FaEdit /> Continue Editing</span>`,
+            customClass: {
+                confirmButton: "btn text-[#03373d] dark:text-white bg-[#caeb66] dark:bg-[#4b6e0f] border-none",
+                cancelButton: "btn bg-[#03373d] text-white hover:bg-[#055c6c] border-none",
+            }
         }).then((result) => {
             if (result.isConfirmed) {
                 const parcel = {
@@ -66,28 +129,18 @@ const SendParcel = () => {
                     cost,
                     creation_date: new Date().toISOString()
                 };
-                console.log(parcel);
+
                 // Save to localStorage
                 const existing = JSON.parse(localStorage.getItem('parcels') || '[]');
                 localStorage.setItem('parcels', JSON.stringify([...existing, parcel]));
 
-                // Save to fake API
-                // await fetch('https://fake-api.example.com/parcels', {
-                //     method: 'POST',
-                //     headers: { 'Content-Type': 'application/json' },
-                //     body: JSON.stringify(parcel)
-                // });
+                // TODO: Integrate real payment gateway here
+                proceedToPayment(parcel);
 
-                Swal.fire({
-                    title: "Order Confirmed!",
-                    text: 'Parcel successfully submitted!',
-                    icon: "success"
-                });
-                reset();
+            } else {
+                console.log("User chose to continue editing.");
             }
         });
-
-
 
     };
 
@@ -164,112 +217,112 @@ const SendParcel = () => {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Sender Info */}
-                <div className="card p-6 bg-white dark:bg-gray-800 shadow  border border-green-950 dark:border-white">
-                    <h2 className="text-xl font-semibold mb-4">Sender Info</h2>
-                    <div className="grid grid-cols-1 gap-4">
-                        <div>
-                            <label>Name</label>
-                            <input className="input input-bordered w-full" defaultValue="Your Name" {...register("senderName", { required: true })} />
-                            {errors.senderName && <p className="text-red-500">Required</p>}
-                        </div>
-                        <div>
-                            <label>Contact</label>
-                            <input className="input input-bordered w-full" {...register("senderContact", { required: true })} />
-                            {errors.senderContact && <p className="text-red-500">Required</p>}
-                        </div>
-                        <div>
-                            <label>Region</label>
-                            <select className="select select-bordered w-full" {...register("senderRegion", { required: true })}>
-                                <option value="">Select</option>
-                                <option value="Dhaka">Dhaka</option>
-                                <option value="Chattogram">Chattogram</option>
-                                <option value="Rajshahi">Rajshahi</option>
-                                <option value="Khulna">Khulna</option>
-                                <option value="Barisal">Barisal</option>
-                                <option value="Sylhet">Sylhet</option>
-                                <option value="Rangpur">Rangpur</option>
-                                <option value="Mymensingh">Mymensingh</option>
+                    <div className="card p-6 bg-white dark:bg-gray-800 shadow  border border-green-950 dark:border-white">
+                        <h2 className="text-xl font-semibold mb-4">Sender Info</h2>
+                        <div className="grid grid-cols-1 gap-4">
+                            <div>
+                                <label>Name</label>
+                                <input className="input input-bordered w-full" defaultValue="Your Name" {...register("senderName", { required: true })} />
+                                {errors.senderName && <p className="text-red-500">Required</p>}
+                            </div>
+                            <div>
+                                <label>Contact</label>
+                                <input className="input input-bordered w-full" {...register("senderContact", { required: true })} />
+                                {errors.senderContact && <p className="text-red-500">Required</p>}
+                            </div>
+                            <div>
+                                <label>Region</label>
+                                <select className="select select-bordered w-full" {...register("senderRegion", { required: true })}>
+                                    <option value="">Select</option>
+                                    <option value="Dhaka">Dhaka</option>
+                                    <option value="Chattogram">Chattogram</option>
+                                    <option value="Rajshahi">Rajshahi</option>
+                                    <option value="Khulna">Khulna</option>
+                                    <option value="Barisal">Barisal</option>
+                                    <option value="Sylhet">Sylhet</option>
+                                    <option value="Rangpur">Rangpur</option>
+                                    <option value="Mymensingh">Mymensingh</option>
 
-                            </select>
-                            {errors.senderRegion && <p className="text-red-500">Required</p>}
-                        </div>
-                        <div>
-                            <label>Service Center</label>
-                            <select className="select select-bordered w-full" {...register("senderServiceCenter", { required: true })}>
-                                <option value="">Select</option>
-                                {serviceCenters[senderRegion]?.map((district) => (
-                                    <option key={district} value={district}>{district}</option>
-                                ))}
-                            </select>
+                                </select>
+                                {errors.senderRegion && <p className="text-red-500">Required</p>}
+                            </div>
+                            <div>
+                                <label>Service Center</label>
+                                <select className="select select-bordered w-full" {...register("senderServiceCenter", { required: true })}>
+                                    <option value="">Select</option>
+                                    {serviceCenters[senderRegion]?.map((district) => (
+                                        <option key={district} value={district}>{district}</option>
+                                    ))}
+                                </select>
 
-                            {errors.senderServiceCenter && <p className="text-red-500">Required</p>}
-                        </div>
-                        <div>
-                            <label>Address</label>
-                            <input className="input input-bordered w-full" {...register("senderAddress", { required: true })} />
-                            {errors.senderAddress && <p className="text-red-500">Required</p>}
-                        </div>
-                        <div>
-                            <label>Pick-up Instruction</label>
-                            <textarea className="textarea textarea-bordered w-full" {...register("pickupInstruction", { required: true })}></textarea>
-                            {errors.pickupInstruction && <p className="text-red-500">Required</p>}
+                                {errors.senderServiceCenter && <p className="text-red-500">Required</p>}
+                            </div>
+                            <div>
+                                <label>Address</label>
+                                <input className="input input-bordered w-full" {...register("senderAddress", { required: true })} />
+                                {errors.senderAddress && <p className="text-red-500">Required</p>}
+                            </div>
+                            <div>
+                                <label>Pick-up Instruction</label>
+                                <textarea className="textarea textarea-bordered w-full" {...register("pickupInstruction", { required: true })}></textarea>
+                                {errors.pickupInstruction && <p className="text-red-500">Required</p>}
+                            </div>
                         </div>
                     </div>
-                </div>
-                {/* Reciever Info */}
-                <div className="card p-6 bg-white dark:bg-gray-800 shadow  border border-green-950 dark:border-white">
-                    <h2 className="text-xl font-semibold mb-4">Receiver Info</h2>
-                    <div className="grid grid-cols-1 gap-4">
-                        <div>
-                            <label>Name</label>
-                            <input className="input input-bordered w-full" {...register("receiverName", { required: true })} />
-                            {errors.receiverName && <p className="text-red-500">Required</p>}
-                        </div>
-                        <div>
-                            <label>Contact</label>
-                            <input className="input input-bordered w-full" {...register("receiverContact", { required: true })} />
-                            {errors.receiverContact && <p className="text-red-500">Required</p>}
-                        </div>
-                        <div>
-                            <label>Region</label>
-                            <select className="select select-bordered w-full" {...register("receiverRegion", { required: true })}>
-                                <option value="">Select</option>
-                                <option value="Dhaka">Dhaka</option>
-                                <option value="Chattogram">Chattogram</option>
-                                <option value="Rajshahi">Rajshahi</option>
-                                <option value="Khulna">Khulna</option>
-                                <option value="Barisal">Barisal</option>
-                                <option value="Sylhet">Sylhet</option>
-                                <option value="Rangpur">Rangpur</option>
-                                <option value="Mymensingh">Mymensingh</option>
+                    {/* Reciever Info */}
+                    <div className="card p-6 bg-white dark:bg-gray-800 shadow  border border-green-950 dark:border-white">
+                        <h2 className="text-xl font-semibold mb-4">Receiver Info</h2>
+                        <div className="grid grid-cols-1 gap-4">
+                            <div>
+                                <label>Name</label>
+                                <input className="input input-bordered w-full" {...register("receiverName", { required: true })} />
+                                {errors.receiverName && <p className="text-red-500">Required</p>}
+                            </div>
+                            <div>
+                                <label>Contact</label>
+                                <input className="input input-bordered w-full" {...register("receiverContact", { required: true })} />
+                                {errors.receiverContact && <p className="text-red-500">Required</p>}
+                            </div>
+                            <div>
+                                <label>Region</label>
+                                <select className="select select-bordered w-full" {...register("receiverRegion", { required: true })}>
+                                    <option value="">Select</option>
+                                    <option value="Dhaka">Dhaka</option>
+                                    <option value="Chattogram">Chattogram</option>
+                                    <option value="Rajshahi">Rajshahi</option>
+                                    <option value="Khulna">Khulna</option>
+                                    <option value="Barisal">Barisal</option>
+                                    <option value="Sylhet">Sylhet</option>
+                                    <option value="Rangpur">Rangpur</option>
+                                    <option value="Mymensingh">Mymensingh</option>
 
 
-                            </select>
-                            {errors.receiverRegion && <p className="text-red-500">Required</p>}
-                        </div>
-                        <div>
-                            <label>Service Center</label>
-                            <select className="select select-bordered w-full" {...register("receiverServiceCenter", { required: true })}>
-                                <option value="">Select</option>
-                                {serviceCenters[receiverRegion]?.map((district) => (
-                                    <option key={district} value={district}>{district}</option>
-                                ))}
-                            </select>
+                                </select>
+                                {errors.receiverRegion && <p className="text-red-500">Required</p>}
+                            </div>
+                            <div>
+                                <label>Service Center</label>
+                                <select className="select select-bordered w-full" {...register("receiverServiceCenter", { required: true })}>
+                                    <option value="">Select</option>
+                                    {serviceCenters[receiverRegion]?.map((district) => (
+                                        <option key={district} value={district}>{district}</option>
+                                    ))}
+                                </select>
 
-                            {errors.receiverServiceCenter && <p className="text-red-500">Required</p>}
-                        </div>
-                        <div>
-                            <label>Address</label>
-                            <input className="input input-bordered w-full" {...register("receiverAddress", { required: true })} />
-                            {errors.receiverAddress && <p className="text-red-500">Required</p>}
-                        </div>
-                        <div>
-                            <label>Delivery Instruction</label>
-                            <textarea className="textarea textarea-bordered w-full" {...register("deliveryInstruction", { required: true })}></textarea>
-                            {errors.deliveryInstruction && <p className="text-red-500">Required</p>}
+                                {errors.receiverServiceCenter && <p className="text-red-500">Required</p>}
+                            </div>
+                            <div>
+                                <label>Address</label>
+                                <input className="input input-bordered w-full" {...register("receiverAddress", { required: true })} />
+                                {errors.receiverAddress && <p className="text-red-500">Required</p>}
+                            </div>
+                            <div>
+                                <label>Delivery Instruction</label>
+                                <textarea className="textarea textarea-bordered w-full" {...register("deliveryInstruction", { required: true })}></textarea>
+                                {errors.deliveryInstruction && <p className="text-red-500">Required</p>}
+                            </div>
                         </div>
                     </div>
-                </div>
                 </div>
 
                 <div className="text-center">
