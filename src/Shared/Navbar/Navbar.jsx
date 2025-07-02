@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router';
 import ProLogo from '../../Components/ProLogo/ProLogo';
+import LogOut from '../../Pages/Authentication/LogOut';
 
 const Navbar = () => {
     const navItems = <>
@@ -33,7 +34,7 @@ const Navbar = () => {
                     </ul>
                 </div>
                 <div className="navbar-end">
-                    <a className="btn">Button</a>
+                    <LogOut/>
                 </div>
             </div>
         </div>

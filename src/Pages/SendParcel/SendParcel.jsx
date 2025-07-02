@@ -5,6 +5,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import Swal from 'sweetalert2';
 import useAxios from '../../hooks/useAxios';
 
+
 const SendParcel = () => {
     const { register, handleSubmit, watch, formState: { errors } } = useForm();
     const axios = useAxios();
@@ -77,8 +78,8 @@ const SendParcel = () => {
             showCancelButton: true,
             confirmButtonColor: "#caeb66", // match light mode
             cancelButtonColor: "#03373d", // match dark mode
-            confirmButtonText: `<span class="flex items-center gap-2"><FaMoneyBillWave /> Proceed to Pay</span>`,
-            cancelButtonText: `<span class="flex items-center gap-2"><FaEdit /> Continue Editing</span>`,
+            confirmButtonText: `<span class="flex items-center gap-2"> Proceed to Pay</span>`,
+            cancelButtonText: `<span class="flex items-center gap-2"> Continue Editing</span>`,
             customClass: {
                 confirmButton: "btn text-[#03373d] dark:text-white bg-[#caeb66] dark:bg-[#4b6e0f] border-none",
                 cancelButton: "btn bg-[#03373d] text-white hover:bg-[#055c6c] border-none",
@@ -101,6 +102,11 @@ const SendParcel = () => {
                     .catch(err => console.log(err));
 
                 // TODO: Integrate real payment gateway here
+                Swal.fire({
+                    title: "Payment proceeding!",
+                    icon: "success",
+                    draggable: true
+                });
                 proceedToPayment(parcel);
 
             } else {
