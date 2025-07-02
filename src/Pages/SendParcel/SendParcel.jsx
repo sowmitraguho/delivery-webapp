@@ -1,45 +1,45 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useForm } from 'react-hook-form';
-import { toast, ToastContainer } from 'react-toastify';
+import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Swal from 'sweetalert2';
+import useAxios from '../../hooks/useAxios';
 
 const SendParcel = () => {
-    const { register, handleSubmit, watch, reset, formState: { errors } } = useForm();
-
-
+    const { register, handleSubmit, watch, formState: { errors } } = useForm();
+    const axios = useAxios();
     //cost calculation
-  const calculateCostBreakdown = (data) => {
-  const isOutside = data.senderServiceCenter !== data.receiverServiceCenter;
-  const type = data.type;
-  const weight = parseFloat(data.weight) || 0;
-  let baseCost = 0;
-  let extraCharge = 0;
-  let total = 0;
-  let notes = [];
+    const calculateCostBreakdown = (data) => {
+        const isOutside = data.senderServiceCenter !== data.receiverServiceCenter;
+        const type = data.type;
+        const weight = parseFloat(data.weight) || 0;
+        let baseCost = 0;
+        let extraCharge = 0;
+        let total = 0;
+        let notes = [];
 
-  if (type === "document") {
-    baseCost = isOutside ? 80 : 60;
-    total = baseCost;
-    notes.push(`Base Charge for Document (${isOutside ? 'Outside' : 'Within'} City): Tk ${baseCost}`);
-  } else {
-    if (weight <= 3) {
-      baseCost = isOutside ? 150 : 110;
-      total = baseCost;
-      notes.push(`Base Charge for more than or equal 3Kg Non-Document Product (${isOutside ? 'Outside' : 'Within'} City): Tk ${baseCost}`);
-    } else {
-      baseCost = isOutside ? 150 : 110;
-      const additional = parseFloat(((weight - 3) * 40).toFixed(2));
-      extraCharge = isOutside ? additional + 40 : additional;
-      total = baseCost + extraCharge;
-      notes.push(`Base Charge for more than 3Kg Non-Document Product: Tk ${baseCost}`);
-      notes.push(`Extra Weight Charge: Tk ${additional}`);
-      if (isOutside) notes.push(`Outside City Extra: Tk 40`);
-    }
-  }
+        if (type === "document") {
+            baseCost = isOutside ? 80 : 60;
+            total = baseCost;
+            notes.push(`Base Charge for Document (${isOutside ? 'Outside' : 'Within'} City): Tk ${baseCost}`);
+        } else {
+            if (weight <= 3) {
+                baseCost = isOutside ? 150 : 110;
+                total = baseCost;
+                notes.push(`Base Charge for more than or equal 3Kg Non-Document Product (${isOutside ? 'Outside' : 'Within'} City): Tk ${baseCost}`);
+            } else {
+                baseCost = isOutside ? 150 : 110;
+                const additional = parseFloat(((weight - 3) * 40).toFixed(2));
+                extraCharge = isOutside ? additional + 40 : additional;
+                total = baseCost + extraCharge;
+                notes.push(`Base Charge for more than 3Kg Non-Document Product: Tk ${baseCost}`);
+                notes.push(`Extra Weight Charge: Tk ${additional}`);
+                if (isOutside) notes.push(`Outside City Extra: Tk 40`);
+            }
+        }
 
-  return { total, notes };
-};
+        return { total, notes };
+    };
 
 
 
@@ -59,58 +59,19 @@ const SendParcel = () => {
         }
 
         //cost calculation
-        const {notes, total} = calculateCostBreakdown(data);
-        
-
-
-
-        // Swal.fire({
-        //     title: "Are you sure?",
-        //     text: `Delivery Cost: $${cost.toFixed(2)}`,
-        //     icon: "warning",
-        //     showCancelButton: true,
-        //     confirmButtonColor: "#3085d6",
-        //     cancelButtonColor: "#d33",
-        //     confirmButtonText: "Confirm!"
-        // }).then((result) => {
-        //     if (result.isConfirmed) {
-        //         const parcel = {
-        //             ...data,
-        //             cost,
-        //             creation_date: new Date().toISOString()
-        //         };
-        //         console.log(parcel);
-        //         // Save to localStorage
-        //         const existing = JSON.parse(localStorage.getItem('parcels') || '[]');
-        //         localStorage.setItem('parcels', JSON.stringify([...existing, parcel]));
-
-        //         // Save to fake API
-        //         // await fetch('https://fake-api.example.com/parcels', {
-        //         //     method: 'POST',
-        //         //     headers: { 'Content-Type': 'application/json' },
-        //         //     body: JSON.stringify(parcel)
-        //         // });
-
-        //         Swal.fire({
-        //             title: "Order Confirmed!",
-        //             text: 'Parcel successfully submitted!',
-        //             icon: "success"
-        //         });
-        //         // reset();
-        //     }
-        // });
+        const { notes, total } = calculateCostBreakdown(data);
 
         Swal.fire({
             title: "Payment Breakdown & Confirmation",
             html: `
-       <div class="text-left leading-relaxed">
-        <p><strong>Parcel Type:</strong> ${data.type}</p>
-        <p><strong>Weight:</strong> ${data.weight || 'N/A'} kg</p>
-        <hr class="my-2"/>
-        ${notes.map(n => `<p>✅ ${n}</p>`).join('')}
-        <hr class="my-2"/>
-        <p class="text-lg font-bold">Total Cost: Tk ${total}</p>
-      </div>
+                    <div class="text-left leading-relaxed">
+                        <p><strong>Parcel Type:</strong> ${data.type}</p>
+                        <p><strong>Weight:</strong> ${data.weight || 'N/A'} kg</p>
+                        <hr class="my-2"/>
+                        ${notes.map(n => `<p>✅ ${n}</p>`).join('')}
+                        <hr class="my-2"/>
+                        <p class="text-lg font-bold">Total Cost: Tk ${total}</p>
+                    </div>
     `,
             icon: "info",
             showCancelButton: true,
@@ -133,6 +94,11 @@ const SendParcel = () => {
                 // Save to localStorage
                 const existing = JSON.parse(localStorage.getItem('parcels') || '[]');
                 localStorage.setItem('parcels', JSON.stringify([...existing, parcel]));
+
+                //conected to server
+                axios.post('/parcels', parcel)
+                    .then(res => console.log(res))
+                    .catch(err => console.log(err));
 
                 // TODO: Integrate real payment gateway here
                 proceedToPayment(parcel);
