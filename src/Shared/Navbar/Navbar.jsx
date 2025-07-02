@@ -3,6 +3,7 @@ import { Link, NavLink } from 'react-router';
 import ProLogo from '../../Components/ProLogo/ProLogo';
 import LogOut from '../../Pages/Authentication/LogOut';
 import { useAuth } from '../../hooks/useAuth';
+import UserTooltip from '../UserTooltip/UserTooltip';
 
 const Navbar = () => {
 
@@ -13,6 +14,7 @@ const Navbar = () => {
         <li> <NavLink to="/">Home</NavLink> </li>
         <li> <NavLink to="/coverage">Coverage</NavLink> </li>
         <li> <NavLink to="/sendparcel">Send A Parcel</NavLink> </li>
+        <li> {user && <NavLink to="/dashboard">Dashboard</NavLink> }</li>
         
     </>
     return (
@@ -39,7 +41,7 @@ const Navbar = () => {
                     </ul>
                 </div>
                 <div className="navbar-end">
-                    {user ? <LogOut/> : <Link to="/login" className="btn border-none shadow-none bg-[#caeb66] text-[#03373d] rounded font-bold  hover:bg-[#03373d] hover:text-[#caeb66] transition-colors duration-300">Login</Link> }
+                    {user ? <div className='flex gap-2 items-center'><LogOut/> <UserTooltip/></div> : <Link to="/login" className="btn border-none shadow-none bg-[#caeb66] text-[#03373d] rounded font-bold  hover:bg-[#03373d] hover:text-[#caeb66] transition-colors duration-300">Login</Link> }
                 </div>
             </div>
         </div>
